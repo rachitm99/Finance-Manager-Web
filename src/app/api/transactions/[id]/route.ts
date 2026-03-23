@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { subparts, transactionParts, transactions } from "@/db/schema";
+import { dbErrorResponse } from "@/lib/api-errors";
 import { transactionInputSchema } from "@/lib/finance";
 import { redisDel } from "@/lib/redis";
 
@@ -86,21 +87,25 @@ export async function PUT(request: Request, context: RouteContext) {
     await redisDel(DASHBOARD_CACHE_KEY);
 
     return NextResponse.json(updated);
-  } catch {
-    return NextResponse.json({ error: "Unable to update transaction." }, { status: 500 });
+  } catch (error) {
+    return dbErrorResponse(error, "Unable to update transaction.", "PUT /api/transactions/[id]");
   }
 }
 
 export async function DELETE(_: Request, context: RouteContext) {
-  const db = getDb();
-  const { id } = await context.params;
+  try {
+    const db = getDb();
+    const { id } = await context.params;
 
-  const existing = await db.select({ id: transactions.id }).from(transactions).where(eq(transactions.id, id)).limit(1);
-  if (!existing[0]) {
-    return NextResponse.json({ error: "Transaction not found." }, { status: 404 });
+    const existing = await db.select({ id: transactions.id }).from(transactions).where(eq(transactions.id, id)).limit(1);
+    if (!existing[0]) {
+      return NextResponse.json({ error: "Transaction not found." }, { status: 404 });
+    }
+
+    await db.delete(transactions).where(eq(transactions.id, id));
+    await redisDel(DASHBOARD_CACHE_KEY);
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    return dbErrorResponse(error, "Unable to delete transaction.", "DELETE /api/transactions/[id]");
   }
-
-  await db.delete(transactions).where(eq(transactions.id, id));
-  await redisDel(DASHBOARD_CACHE_KEY);
-  return new NextResponse(null, { status: 204 });
 }

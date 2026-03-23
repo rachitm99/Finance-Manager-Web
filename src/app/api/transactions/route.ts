@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { subparts, transactionParts, transactions } from "@/db/schema";
+import { dbErrorResponse } from "@/lib/api-errors";
 import { transactionInputSchema } from "@/lib/finance";
 import { redisDel } from "@/lib/redis";
 
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
     await redisDel(DASHBOARD_CACHE_KEY);
 
     return NextResponse.json(transaction, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Unable to create transaction." }, { status: 500 });
+  } catch (error) {
+    return dbErrorResponse(error, "Unable to create transaction.", "POST /api/transactions");
   }
 }

@@ -19,7 +19,22 @@ function findCode(error: unknown): string | undefined {
   return current.cause?.code;
 }
 
-export function dbErrorResponse(error: unknown, defaultMessage: string) {
+export function logApiError(context: string, error: unknown, extra?: Record<string, unknown>) {
+  const current = error as ErrorWithCode | undefined;
+  const payload = {
+    context,
+    code: findCode(error),
+    message: current?.message ?? "Unknown error",
+    causeMessage: current?.cause?.message,
+    ...(extra ?? {}),
+  };
+
+  console.error("[api-error]", payload, error);
+}
+
+export function dbErrorResponse(error: unknown, defaultMessage: string, context: string) {
+  logApiError(context, error);
+
   const code = findCode(error);
 
   if (code === "ENOTFOUND") {

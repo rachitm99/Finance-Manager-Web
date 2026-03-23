@@ -11,7 +11,7 @@ export async function GET() {
 
     return NextResponse.json(rows);
   } catch (error) {
-    return dbErrorResponse(error, "Failed to load subparts.");
+    return dbErrorResponse(error, "Failed to load subparts.", "GET /api/subparts");
   }
 }
 
@@ -38,6 +38,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
-    return dbErrorResponse(error, "Failed to create subpart.");
+    return dbErrorResponse(error, "Failed to create subpart.", "POST /api/subparts");
   }
 }

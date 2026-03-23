@@ -100,6 +100,6 @@ export async function GET() {
 
     return NextResponse.json(response);
   } catch (error) {
-    return dbErrorResponse(error, "Failed to load dashboard data.");
+    return dbErrorResponse(error, "Failed to load dashboard data.", "GET /api/dashboard");
   }
 }
