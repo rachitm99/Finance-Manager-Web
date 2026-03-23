@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f8ef;
+  --background-soft: #eef1dd;
+  --foreground: #15222d;
+  --muted: #4d5e6f;
+  --income: #0d7a43;
+  --expense: #c04833;
+  --card: #fffdf6;
+  --card-border: #d9dec6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+}
+
+body {
+  background:
+    radial-gradient(circle at 15% 20%, #e8efd2 0, transparent 35%),
+    radial-gradient(circle at 90% 2%, #f0e8c9 0, transparent 22%),
+    linear-gradient(180deg, var(--background-soft), var(--background));
+  color: var(--foreground);
+  font-family: var(--font-body), sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading), serif;
+}
+
+@keyframes fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fade-slide 420ms ease-out both;
+}
