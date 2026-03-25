@@ -21,15 +21,54 @@ CREATE TABLE IF NOT EXISTS finance_manager_app.subparts (
 
 CREATE UNIQUE INDEX IF NOT EXISTS subparts_name_unique ON finance_manager_app.subparts(name);
 
+CREATE TABLE IF NOT EXISTS finance_manager_app.categories (
+  id text PRIMARY KEY,
+  name text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS categories_name_unique ON finance_manager_app.categories(name);
+
 CREATE TABLE IF NOT EXISTS finance_manager_app.transactions (
   id text PRIMARY KEY,
   title text NOT NULL,
+  total_amount numeric(14, 2) NOT NULL DEFAULT 0,
   type finance_manager_app.transaction_type NOT NULL,
   occurred_at timestamptz NOT NULL,
+  category_id text,
+  category_label text,
   notes text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE finance_manager_app.transactions
+  ADD COLUMN IF NOT EXISTS category_id text;
+
+ALTER TABLE finance_manager_app.transactions
+  ADD COLUMN IF NOT EXISTS category_label text;
+
+ALTER TABLE finance_manager_app.transactions
+  ADD COLUMN IF NOT EXISTS total_amount numeric(14, 2) NOT NULL DEFAULT 0;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'transactions_category_id_fk'
+      AND conrelid = 'finance_manager_app.transactions'::regclass
+  ) THEN
+    ALTER TABLE finance_manager_app.transactions
+      ADD CONSTRAINT transactions_category_id_fk
+      FOREIGN KEY (category_id)
+      REFERENCES finance_manager_app.categories(id)
+      ON DELETE SET NULL;
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS transactions_category_id_idx ON finance_manager_app.transactions(category_id);
 
 CREATE TABLE IF NOT EXISTS finance_manager_app.transaction_parts (
   id text PRIMARY KEY,

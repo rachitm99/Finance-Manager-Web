@@ -47,18 +47,22 @@ export async function GET() {
 
     for (const transaction of txRows) {
       const parts = partsByTransaction.get(transaction.id) ?? [];
-      const totalAmount = calculateTransactionTotal(
+      const breakdownTotal = calculateTransactionTotal(
         parts.map((part) => ({
           amount: Number(part.amount),
           effect: part.effect,
         })),
       );
 
+      const totalAmount = Number(transaction.totalAmount ?? breakdownTotal);
+
       const dto: TransactionDTO = {
         id: transaction.id,
         title: transaction.title,
         type: transaction.type,
         occurredAt: transaction.occurredAt.toISOString(),
+        categoryId: transaction.categoryId,
+        categoryName: transaction.categoryLabel,
         notes: transaction.notes,
         totalAmount,
         parts: parts.map((part) => ({

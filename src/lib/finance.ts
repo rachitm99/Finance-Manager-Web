@@ -19,10 +19,13 @@ const partSchema = z
 
 export const transactionInputSchema = z.object({
   title: z.string().trim().min(2),
+  amount: z.number().positive(),
   type: transactionTypeSchema,
   occurredAt: z.string().datetime(),
+  categoryId: z.string().optional(),
+  newCategoryName: z.string().optional(),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
-  parts: z.array(partSchema).min(1),
+  parts: z.array(partSchema).default([]),
 });
 
 export type TransactionInput = z.infer<typeof transactionInputSchema>;

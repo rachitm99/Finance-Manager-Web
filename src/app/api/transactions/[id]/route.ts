@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { subparts, transactionParts, transactions } from "@/db/schema";
+import { categories, subparts, transactionParts, transactions } from "@/db/schema";
 import { dbErrorResponse } from "@/lib/api-errors";
 import { transactionInputSchema } from "@/lib/finance";
 import { redisDel } from "@/lib/redis";
@@ -32,6 +32,33 @@ export async function PUT(request: Request, context: RouteContext) {
   try {
     const updated = await db.transaction(async (tx) => {
       const partRows: typeof transactionParts.$inferInsert[] = [];
+
+      const categoryName = data.newCategoryName?.trim();
+      const category = data.categoryId
+        ? (
+            await tx
+              .select({ id: categories.id, name: categories.name })
+              .from(categories)
+              .where(eq(categories.id, data.categoryId))
+              .limit(1)
+          )[0]
+        : categoryName
+          ? (
+              (
+                await tx
+                  .select({ id: categories.id, name: categories.name })
+                  .from(categories)
+                  .where(eq(categories.name, categoryName))
+                  .limit(1)
+              )[0] ??
+              (
+                await tx
+                  .insert(categories)
+                  .values({ id: crypto.randomUUID(), name: categoryName, updatedAt: new Date() })
+                  .returning({ id: categories.id, name: categories.name })
+              )[0]
+            )
+          : null;
 
       for (const part of data.parts) {
         const name = part.newSubpartName?.trim();
@@ -72,14 +99,19 @@ export async function PUT(request: Request, context: RouteContext) {
         .update(transactions)
         .set({
           title: data.title,
+          totalAmount: data.amount.toFixed(2),
           type: data.type,
           occurredAt: new Date(data.occurredAt),
+          categoryId: category?.id ?? null,
+          categoryLabel: category?.name ?? null,
           notes: data.notes || null,
           updatedAt: new Date(),
         })
         .where(eq(transactions.id, id));
 
-      await tx.insert(transactionParts).values(partRows);
+      if (partRows.length > 0) {
+        await tx.insert(transactionParts).values(partRows);
+      }
 
       return { id };
     });

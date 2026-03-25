@@ -14,6 +14,8 @@ export type TransactionDTO = {
   title: string;
   type: TransactionType;
   occurredAt: string;
+  categoryId: string | null;
+  categoryName: string | null;
   notes: string | null;
   totalAmount: number;
   parts: PartDTO[];
@@ -34,6 +36,11 @@ export type DashboardDTO = {
 };
 
 export type SubpartDTO = {
+  id: string;
+  name: string;
+};
+
+export type CategoryDTO = {
   id: string;
   name: string;
 };

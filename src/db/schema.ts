@@ -17,11 +17,25 @@ export const subparts = financeSchema.table(
   (table) => [uniqueIndex("subparts_name_unique").on(table.name)],
 );
 
+export const categories = financeSchema.table(
+  "categories",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("categories_name_unique").on(table.name)],
+);
+
 export const transactions = financeSchema.table("transactions", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
+  totalAmount: numeric("total_amount", { precision: 14, scale: 2 }).notNull().default("0"),
   type: transactionTypeEnum("type").notNull(),
   occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  categoryId: text("category_id").references(() => categories.id, { onDelete: "set null" }),
+  categoryLabel: text("category_label"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -50,8 +64,16 @@ export const subpartRelations = relations(subparts, ({ many }) => ({
   parts: many(transactionParts),
 }));
 
-export const transactionRelations = relations(transactions, ({ many }) => ({
+export const categoryRelations = relations(categories, ({ many }) => ({
+  transactions: many(transactions),
+}));
+
+export const transactionRelations = relations(transactions, ({ many, one }) => ({
   parts: many(transactionParts),
+  category: one(categories, {
+    fields: [transactions.categoryId],
+    references: [categories.id],
+  }),
 }));
 
 export const transactionPartRelations = relations(transactionParts, ({ one }) => ({
